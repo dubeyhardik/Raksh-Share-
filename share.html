@@ -3,43 +3,84 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>Raksh Share</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{
+*{
  margin:0;
- background:#f4f6fb;
+ padding:0;
+ box-sizing:border-box;
+}
+
+html,body{
+ width:100%;
+ height:100%;
+ overflow:hidden;
  font-family:Arial,sans-serif;
+ background:#f4f6fb;
+}
+
+#loader{
+ position:fixed;
+ inset:0;
  display:flex;
  justify-content:center;
  align-items:center;
- min-height:100vh;
+ text-align:center;
+ background:#f4f6fb;
+ z-index:10;
 }
+
 .box{
  background:white;
  padding:35px;
  border-radius:15px;
- text-align:center;
  max-width:400px;
  margin:20px;
+ box-shadow:0 5px 25px rgba(0,0,0,0.06);
 }
-h2{color:#172033}
-p{color:#68748a}
+
+h2{
+ color:#172033;
+ margin-bottom:10px;
+}
+
+p{
+ color:#68748a;
+}
+
+#websiteFrame{
+ width:100%;
+ height:100%;
+ border:none;
+ display:none;
+}
 </style>
 </head>
 
 <body>
 
-<div class="box">
- <h2>RAKSH SHARE</h2>
- <p id="status">Checking sharing link...</p>
+<div id="loader">
+ <div class="box">
+  <h2>RAKSH SHARE</h2>
+  <p id="status">Loading your website...</p>
+ </div>
 </div>
+
+<iframe
+ id="websiteFrame"
+ title="Shared Website"
+ allow="autoplay; fullscreen; clipboard-read; clipboard-write"
+ allowfullscreen>
+</iframe>
 
 <script>
 
 const SUPABASE_URL="https://mtnhjoqurfzvtawzwiim.supabase.co";
+
 const SUPABASE_KEY="sb_publishable_WUzYvpgkzjDLZT_OW6oe0A_ZB_H8TsB";
 
 const db=window.supabase.createClient(
@@ -51,29 +92,55 @@ async function openWebsite(){
 
  const id=new URLSearchParams(location.search).get("id");
 
+ const status=document.getElementById("status");
+ const loader=document.getElementById("loader");
+ const frame=document.getElementById("websiteFrame");
+
  if(!id){
-  document.getElementById("status").textContent=
-  "Invalid sharing link.";
+  status.textContent="Invalid sharing link.";
   return;
  }
 
- const {data,error}=await db.from("shares")
+ const {data,error}=await db
+ .from("shares")
  .select("title,target_url")
  .eq("slug",id)
  .eq("is_active",true)
  .maybeSingle();
 
  if(error || !data){
-  document.getElementById("status").textContent=
-  "Link is invalid or deactivated.";
+  status.textContent="Link is invalid or deactivated.";
   return;
  }
 
- location.replace(data.target_url);
+ try{
+
+  const websiteURL=new URL(data.target_url);
+
+  if(!["http:","https:"].includes(websiteURL.protocol)){
+   throw new Error("Invalid URL");
+  }
+
+  document.title=data.title+" | Raksh Share";
+
+  frame.src=websiteURL.href;
+
+  frame.onload=()=>{
+   loader.style.display="none";
+   frame.style.display="block";
+  };
+
+ }catch(e){
+
+  status.textContent="Invalid website URL.";
+
+ }
+
 }
 
 openWebsite();
 
 </script>
+
 </body>
 </html>
