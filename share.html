@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Raksh Share</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body{
+ margin:0;
+ background:#f4f6fb;
+ font-family:Arial,sans-serif;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ min-height:100vh;
+}
+.box{
+ background:white;
+ padding:35px;
+ border-radius:15px;
+ text-align:center;
+ max-width:400px;
+ margin:20px;
+}
+h2{color:#172033}
+p{color:#68748a}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+ <h2>RAKSH SHARE</h2>
+ <p id="status">Checking sharing link...</p>
+</div>
+
+<script>
+
+const SUPABASE_URL="YOUR_SUPABASE_PROJECT_URL";
+const SUPABASE_KEY="YOUR_SUPABASE_ANON_PUBLIC_KEY";
+
+const db=window.supabase.createClient(
+ SUPABASE_URL,
+ SUPABASE_KEY
+);
+
+async function openWebsite(){
+
+ const id=new URLSearchParams(location.search).get("id");
+
+ if(!id){
+  document.getElementById("status").textContent=
+  "Invalid sharing link.";
+  return;
+ }
+
+ const {data,error}=await db.from("shares")
+ .select("title,target_url")
+ .eq("slug",id)
+ .eq("is_active",true)
+ .maybeSingle();
+
+ if(error || !data){
+  document.getElementById("status").textContent=
+  "Link is invalid or deactivated.";
+  return;
+ }
+
+ location.replace(data.target_url);
+}
+
+openWebsite();
+
+</script>
+</body>
+</html>
